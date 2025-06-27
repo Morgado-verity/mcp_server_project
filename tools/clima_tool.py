@@ -1,20 +1,36 @@
-from mcp.tools import tool
-import requests
 import os
+import requests
+from fastmcp import tool
 
+# Obtém a chave da API a partir das variáveis de ambiente.
+# Lembre-se de criar um ficheiro .env na raiz do seu projeto e adicionar:
+# OPENWEATHER_KEY="sua_chave_aqui"
 OPENWEATHER_KEY = os.getenv("OPENWEATHER_KEY")
 
-@tool
-def clima_hoje(cidade: str) -> str:
+# --- Definição dos Modelos de Entrada e Saída ---
+
+# --- Definição da Ferramenta ---
+# 3. Decorador @tool atualizado:
+#    Os dois primeiros argumentos são agora, obrigatoriamente, as classes
+#    de Input e Output que acabámos de definir.
+@tool()
+def clima_hoje(input: str) -> str:
     """
-    Retorna a previsão atual do tempo na cidade informada (ex: Rio de Janeiro),
-    incluindo a descrição do clima e temperatura em Celsius. Ideal para perguntas como
-    'como está o clima hoje em São Paulo?' ou 'qual a temperatura agora no Rio?'.
+      Retorna a previsão atual do tempo na cidade informada (ex: Rio de Janeiro), incluindo a descrição do clima e temperatura em Celsius.
+    Args:
+        input: Uma instância de ClimaInput, contendo o campo 'cidade'.
+
+    Returns:
+        Uma instância de ClimaOutput, contendo o campo 'clima_info'.
     """
+    if not OPENWEATHER_KEY:
+        # 4. Retorno em caso de erro: Sempre retorna uma instância da classe de Output.
+        return "Erro: A chave da API OpenWeatherMap (OPENWEATHER_KEY) não foi configurada."
+
     try:
         url = "https://api.openweathermap.org/data/2.5/weather"
         params = {
-            "q": cidade,
+            "q": input.cidade, # Acede ao parâmetro através de input.cidade
             "appid": OPENWEATHER_KEY,
             "lang": "pt_br",
             "units": "metric"
@@ -27,6 +43,9 @@ def clima_hoje(cidade: str) -> str:
 
         clima = dados["weather"][0]["description"]
         temp = dados["main"]["temp"]
-        return f"O clima em {cidade} é '{clima}' com temperatura de {temp}°C."
+        
+        # 5. Retorno em caso de sucesso: Também retorna uma instância da classe de Output.
+        return f"O clima em {input.cidade} é '{clima}' com temperatura de {temp}°C."
+    
     except Exception as e:
-        return f"Erro ao buscar clima: {str(e)}"
+        return f"Erro inesperado ao buscar clima: {str(e)}"
